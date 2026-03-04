@@ -1,26 +1,40 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Modal, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useAuth } from '../../src/state/AuthContext';
-import { useTheme } from '../../src/state/ThemeContext';
-import { useLanguage } from '../../src/state/LanguageContext';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { Modal, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LanguageCode, translations } from '../../src/i18n/translations';
+import { useAuth } from '../../src/state/AuthContext';
+import { useLanguage } from '../../src/state/LanguageContext';
+import { useTheme } from '../../src/state/ThemeContext';
 
 export default function ProfileTab() {
     const { isDarkMode, toggleDarkMode } = useTheme();
-    const { session, logout } = useAuth();
+    const { session } = useAuth();
     const { language, setLanguage, t } = useLanguage();
+    const router = useRouter();
 
     const [isLangModalVisible, setIsLangModalVisible] = useState(false);
     const [isInfoModalVisible, setIsInfoModalVisible] = useState(false);
 
+    const blurActiveElement = () => {
+        if (Platform.OS === 'web' && typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+        }
+    };
+
+    const openInfoModal = () => {
+        blurActiveElement();
+        setIsInfoModalVisible(true);
+    };
+
+    const openLangModal = () => {
+        blurActiveElement();
+        setIsLangModalVisible(true);
+    };
+
     const userEmail = session?.email ?? '';
     const userType = session?.userType ?? null;
 
-    const handleLogout = async () => {
-        await logout();
-    };
 
     const getRoleInfo = () => {
         if (userType === 1) return { initials: 'AD', name: t('globalAdministrator'), badge: t('systemController'), icon: 'shield-checkmark' };
@@ -54,7 +68,7 @@ export default function ProfileTab() {
                 <View style={styles.profileMenu}>
                     <Text style={styles.menuTitle}>{t('profileTitle')}</Text>
 
-                    <Pressable style={styles.menuItem} onPress={() => setIsInfoModalVisible(true)}>
+                    <Pressable style={styles.menuItem} onPress={openInfoModal}>
                         <View style={styles.menuIconContainer}>
                             <Ionicons name="person-outline" size={20} color="#F2C27A" />
                         </View>
@@ -84,7 +98,7 @@ export default function ProfileTab() {
                         </View>
                     </Pressable>
 
-                    <Pressable style={styles.menuItem} onPress={() => setIsLangModalVisible(true)}>
+                    <Pressable style={styles.menuItem} onPress={openLangModal}>
                         <View style={styles.menuIconContainer}>
                             <Ionicons name="language-outline" size={20} color="#F2C27A" />
                         </View>
@@ -92,12 +106,20 @@ export default function ProfileTab() {
                         <Text style={styles.menuValueText}>{translations[language].languageNames[language]}</Text>
                     </Pressable>
 
-                    <Pressable style={[styles.menuItem, { marginTop: 32 }]} onPress={handleLogout}>
-                        <View style={[styles.menuIconContainer, { backgroundColor: '#3D1C1C' }]}>
-                            <Ionicons name="log-out-outline" size={20} color="#FF5252" />
+
+                    <Text style={[styles.menuTitle, { marginTop: 24 }]}>Hesab</Text>
+
+                    <Pressable
+                        style={[styles.menuItem, styles.logoutItem]}
+                        onPress={() => router.push('/logout')}
+                    >
+                        <View style={[styles.menuIconContainer, styles.logoutIconContainer]}>
+                            <Ionicons name="log-out-outline" size={20} color="#FF6B35" />
                         </View>
-                        <Text style={[styles.menuText, { color: '#FF5252' }]}>{t('logout')}</Text>
+                        <Text style={[styles.menuText, styles.logoutText]}>Çıxış et</Text>
+                        <Ionicons name="chevron-forward" size={20} color="#FF6B35" />
                     </Pressable>
+
                 </View>
 
                 <Text style={[styles.versionText, isDarkMode && styles.versionTextDark]}>TrioCut v1.2.0</Text>
@@ -220,6 +242,9 @@ const styles = StyleSheet.create({
     toggleBackgroundActive: { backgroundColor: '#B24700' },
     toggleCircle: { width: 20, height: 20, borderRadius: 10, backgroundColor: '#F2C27A' },
     toggleCircleActive: { transform: [{ translateX: 20 }], backgroundColor: '#FFFFFF' },
+    logoutItem: { borderBottomWidth: 0 },
+    logoutIconContainer: { backgroundColor: '#FFF0EB' },
+    logoutText: { color: '#FF6B35' },
 
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
     modalContent: { backgroundColor: '#FFFFFF', width: '80%', borderRadius: 16, padding: 20 },

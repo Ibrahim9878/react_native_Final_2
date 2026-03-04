@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Pressable, FlatList, ActivityIndicator, RefreshControl, } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View, } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getAuthData } from "../../src/storage/authStorage";
-import { useAuth } from "../../src/state/AuthContext";
 import { useAppointments } from "../../src/state/AppointmentsContext";
-import { AppointmentStatus, Appointment } from "../../src/storage/appointmentsStorage";
-import { useTheme } from "../../src/state/ThemeContext";
+import { useAuth } from "../../src/state/AuthContext";
 import { useLanguage } from "../../src/state/LanguageContext";
+import { useTheme } from "../../src/state/ThemeContext";
+import { Appointment, AppointmentStatus } from "../../src/storage/appointmentsStorage";
+import { getAuthData } from "../../src/storage/authStorage";
 
 type FilterType = AppointmentStatus | 'All';
 

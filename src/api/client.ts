@@ -1,6 +1,6 @@
 import { getAuthData } from '../storage/authStorage';
 
-const BASE_URL = 'http://192.168.1.64:5232';
+const BASE_URL = 'http://172.20.30.237:5232';
 
 interface RequestOptions extends RequestInit {
     // Custom options can be added here if needed

@@ -1,23 +1,23 @@
-import React, { useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import React, { useState } from 'react';
 import {
-    StyleSheet,
-    View,
-    Text,
-    TextInput,
-    Pressable,
+    ActivityIndicator,
+    Alert,
     KeyboardAvoidingView,
     Platform,
+    Pressable,
     ScrollView,
-    ActivityIndicator,
-    Alert
+    StyleSheet,
+    Text,
+    TextInput,
+    View
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { loginUser, registerUser } from '../src/api/auth';
-import { useTheme } from '../src/state/ThemeContext';
 import { useAuth } from '../src/state/AuthContext';
 import { useLanguage } from '../src/state/LanguageContext';
+import { useTheme } from '../src/state/ThemeContext';
 
 function decodeJWT(token: string) {
     try {

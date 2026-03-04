@@ -1,11 +1,11 @@
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
-import { View, ActivityIndicator } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 import "../global.css";
-import { ThemeProvider } from "../src/state/ThemeContext";
+import { AppointmentsProvider } from "../src/state/AppointmentsContext";
 import { AuthProvider, useAuth } from "../src/state/AuthContext";
 import { LanguageProvider } from "../src/state/LanguageContext";
-import { AppointmentsProvider } from "../src/state/AppointmentsContext";
+import { ThemeProvider } from "../src/state/ThemeContext";
 
 function RootLayoutNav() {
   const { session, isLoading } = useAuth();
@@ -16,16 +16,20 @@ function RootLayoutNav() {
     if (isLoading) return;
 
     const inTabsGroup = segments[0] === '(tabs)';
+    const onLogoutScreen = segments[0] === 'logout';
 
-    // If user is not logged in and trying to access a secure area
+    // Logout screen-i avtomatik yönləndirmədən qoru
+    if (onLogoutScreen) return;
+
     if (!session && inTabsGroup) {
-      router.replace('/');
+      router.replace('/login');
+      return;
     }
-    // If user is logged in and sitting on the login screen
-    else if (session && !inTabsGroup) {
+
+    if (session && !inTabsGroup) {
       router.replace('/(tabs)');
     }
-  }, [session, isLoading, segments]);
+  }, [session, isLoading, segments, router]);
 
   if (isLoading) {
     return (
@@ -35,7 +39,14 @@ function RootLayoutNav() {
     );
   }
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
+      <Stack.Screen name="login" />
+      <Stack.Screen name="logout" />
+      <Stack.Screen name="(tabs)" />
+    </Stack>
+  );
 }
 
 export default function RootLayout() {

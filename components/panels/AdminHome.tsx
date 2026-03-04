@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Pressable, FlatList, TextInput, ScrollView, } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { getAuthData } from "../../src/storage/authStorage";
-import { useAuth } from "../../src/state/AuthContext";
 import { useAppointments } from "../../src/state/AppointmentsContext";
-import { useTheme } from "../../src/state/ThemeContext";
+import { useAuth } from "../../src/state/AuthContext";
 import { useLanguage } from "../../src/state/LanguageContext";
+import { useTheme } from "../../src/state/ThemeContext";
+import { getAuthData } from "../../src/storage/authStorage";
 
 type FilterStatus = 'pending' | 'accepted' | 'rejected' | 'all';
 type FilterDate = 'all' | 'today' | 'this_week';
