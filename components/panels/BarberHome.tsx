@@ -9,20 +9,29 @@ import { useTheme } from "../../src/state/ThemeContext";
 import { Appointment, AppointmentStatus } from "../../src/storage/appointmentsStorage";
 import { getAuthData } from "../../src/storage/authStorage";
 
-type FilterType = AppointmentStatus | 'All';
+const getStatusText = (status: any) => {
+    const s = String(status).toLowerCase();
+    if (s === '0' || s === 'pending') return 'pending';
+    if (s === '1' || s === 'accepted') return 'accepted';
+    if (s === '2' || s === 'rejected') return 'rejected';
+    return s;
+};
 
 const getId = (item: any) => item.id || item.appointmentId;
+
+type FilterType = AppointmentStatus | 'All';
 
 export default function BarberHome() {
     const { isDarkMode } = useTheme();
     const { t } = useLanguage();
-    const { logout } = useAuth();
+    const { logout, session } = useAuth();
     const { appointments, loading: isLoading, refresh: refreshAppointments, acceptAppointment, rejectAppointment } = useAppointments();
-    const [barberEmail, setBarberEmail] = useState<string>('');
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [filter, setFilter] = useState<FilterType>('All');
     const [actionLoadingIds, setActionLoadingIds] = useState<Record<string, boolean>>({});
     const [actionErrors, setActionErrors] = useState<Record<string, string>>({});
+
+    const barberEmail = session?.email || '';
 
     const handleRefresh = async () => {
         setIsRefreshing(true);
@@ -31,12 +40,8 @@ export default function BarberHome() {
     };
 
     useEffect(() => {
-        getAuthData().then(s => {
-            if (s && s.email) {
-                setBarberEmail(s.email);
-            }
-        });
-    }, []);
+        refreshAppointments();
+    }, [refreshAppointments]);
 
     const handleLogout = async () => {
         await logout();
@@ -51,7 +56,7 @@ export default function BarberHome() {
             if (isAccept) {
                 await acceptAppointment(id);
             } else {
-                await rejectAppointment(id, "Rejected by Barber");
+                await rejectAppointment(id, t('rejectedByBarber'));
             }
         } catch (e: any) {
             setActionErrors(prev => ({ ...prev, [id]: e.message || `Failed to ${isAccept ? 'accept' : 'reject'}` }));
@@ -60,14 +65,17 @@ export default function BarberHome() {
         }
     };
 
-    const myAppointments = appointments.filter(a => a.barberEmail === barberEmail);
+    // Removed filtering by email to show all barber appointments as requested
+    const myAppointments = appointments;
+
     const filteredAppointments = myAppointments.filter(a => {
+        const itemStatus = getStatusText(a.status);
         if (filter === 'All') return true;
-        return a.status === filter.toLowerCase();
+        return itemStatus === filter.toLowerCase();
     }).sort((a, b) => b.createdAt - a.createdAt);
 
-    const pendingCount = myAppointments.filter(a => a.status === 'pending').length;
-    const acceptedCount = myAppointments.filter(a => a.status === 'accepted').length;
+    const pendingCount = myAppointments.filter(a => getStatusText(a.status) === 'pending').length;
+    const acceptedCount = myAppointments.filter(a => getStatusText(a.status) === 'accepted').length;
     const todayString = new Date().toDateString();
     const todayCount = myAppointments.filter(a => new Date(a.appointmentDateISO).toDateString() === todayString).length;
 
@@ -113,28 +121,29 @@ export default function BarberHome() {
                     <Text style={[styles.serviceText, isDarkMode && styles.serviceTextDark]}>{item.serviceName}</Text>
                     <View style={[
                         styles.statusBadge,
-                        item.status === 'pending' && styles.statusPending,
-                        item.status === 'accepted' && styles.statusAccepted,
-                        item.status === 'rejected' && styles.statusRejected,
+                        getStatusText(item.status) === 'pending' && styles.statusPending,
+                        getStatusText(item.status) === 'accepted' && styles.statusAccepted,
+                        getStatusText(item.status) === 'rejected' && styles.statusRejected,
                         isDarkMode && styles.statusBadgeDark
                     ]}>
                         <Text style={[
                             styles.statusText,
-                            item.status === 'pending' && styles.statusTextPending,
-                            item.status === 'accepted' && styles.statusTextAccepted,
-                            item.status === 'rejected' && styles.statusTextRejected,
+                            getStatusText(item.status) === 'pending' && styles.statusTextPending,
+                            getStatusText(item.status) === 'accepted' && styles.statusTextAccepted,
+                            getStatusText(item.status) === 'rejected' && styles.statusTextRejected,
                             isDarkMode && { fontWeight: 'bold' }
                         ]}>
-                            {item.status === 'pending' ? t('pending').toUpperCase() : item.status === 'accepted' ? t('accepted').toUpperCase() : t('rejected').toUpperCase()}
+                            {getStatusText(item.status).toUpperCase()}
                         </Text>
                     </View>
                 </View>
 
                 <View style={styles.cardBody}>
-                    <Text style={[styles.customerText, isDarkMode && styles.customerTextDark]}>Client: {item.customerEmail}</Text>
+                    <Text style={[styles.customerText, isDarkMode && styles.customerTextDark]}>{t('clientLabel')} {item.customerEmail}</Text>
+                    <Text style={[styles.customerText, { fontSize: 12, marginTop: -4, marginBottom: 8 }, isDarkMode && styles.customerTextDark]}>To: {item.barberEmail}</Text>
                     <View style={styles.timeRow}>
                         <Ionicons name="calendar-outline" size={16} color={isDarkMode ? "#A0A0A0" : "#6D4C41"} />
-                        <Text style={[styles.timeText, isDarkMode && styles.timeTextDark]}>{dateString} at {timeString}</Text>
+                        <Text style={[styles.timeText, isDarkMode && styles.timeTextDark]}>{dateString} {t('atSeparator')} {timeString}</Text>
                     </View>
 
                     {errorText && (
@@ -164,7 +173,7 @@ export default function BarberHome() {
                         </View>
                     )}
                 </View>
-            </View>
+            </View >
         );
     };
 
@@ -187,7 +196,7 @@ export default function BarberHome() {
                 </View>
                 <View style={[styles.statBox, styles.statBoxAlt, isDarkMode && styles.statBoxAltDark]}>
                     <Text style={[styles.statNumber, { color: isDarkMode ? '#F2C27A' : '#B35A12' }]}>{todayCount}</Text>
-                    <Text style={[styles.statLabel, { color: isDarkMode ? '#A0A0A0' : '#8C4004' }]}>Today</Text>
+                    <Text style={[styles.statLabel, { color: isDarkMode ? '#A0A0A0' : '#8C4004' }]}>{t('today')}</Text>
                 </View>
                 <View style={[styles.statBox, styles.statBoxSuccess, isDarkMode && styles.statBoxSuccessDark]}>
                     <Text style={[styles.statNumber, { color: isDarkMode ? '#81C784' : '#2E7D32' }]}>{acceptedCount}</Text>

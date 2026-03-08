@@ -56,6 +56,18 @@ export default function AuthScreen() {
 
     const [isLoading, setIsLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+    // Format phone digits into (XX) XXX XX XX pattern
+    const formatPhone = (digits: string): string => {
+        if (digits.length === 0) return '';
+        if (digits.length <= 2) return `(${digits}`;
+        if (digits.length <= 5) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+        if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2, 5)} ${digits.slice(5)}`;
+        if (digits.length <= 9) return `(${digits.slice(0, 2)}) ${digits.slice(2, 5)} ${digits.slice(5, 7)} ${digits.slice(7)}`;
+        return `(${digits.slice(0, 2)}) ${digits.slice(2, 5)} ${digits.slice(5, 7)} ${digits.slice(7, 9)}`;
+    };
 
     const switchMode = (signInMode: boolean) => {
         setIsSignIn(signInMode);
@@ -64,7 +76,15 @@ export default function AuthScreen() {
 
     const handleLogin = async () => {
         if (!email || !password) {
-            setErrorMsg(t('emailDesc')); // or custom "Please fill in fields" localized string
+            setErrorMsg(t('fillFields'));
+            return;
+        }
+        if (!email.includes('@')) {
+            setErrorMsg(t('invalidEmail'));
+            return;
+        }
+        if (password.length < 6) {
+            setErrorMsg(t('passMinLengthErr'));
             return;
         }
 
@@ -107,7 +127,7 @@ export default function AuthScreen() {
             });
 
         } catch (err: any) {
-            setErrorMsg(err.message || "Failed to string login");
+            setErrorMsg(err.message || t('loginFailed'));
         } finally {
             setIsLoading(false);
         }
@@ -115,15 +135,35 @@ export default function AuthScreen() {
 
     const handleRegister = async () => {
         if (!firstName || !lastName || !email || !password || !confirmPassword) {
-            setErrorMsg("Please fill in all required fields (*).");
+            setErrorMsg(t('fillFields'));
+            return;
+        }
+        if (firstName.trim().length < 3) {
+            setErrorMsg(t('firstNameMinErr'));
+            return;
+        }
+        if (lastName.trim().length < 3) {
+            setErrorMsg(t('lastNameMinErr'));
+            return;
+        }
+        if (!email.includes('@')) {
+            setErrorMsg(t('invalidEmail'));
+            return;
+        }
+        if (phone && (!/^\d+$/.test(phone) || phone.length > 9)) {
+            setErrorMsg(t('phoneErr'));
+            return;
+        }
+        if (password.length < 6) {
+            setErrorMsg(t('passMinLengthErr'));
             return;
         }
         if (password !== confirmPassword) {
-            setErrorMsg("Passwords do not match.");
+            setErrorMsg(t('passMismatch'));
             return;
         }
         if (!acceptTerms) {
-            setErrorMsg("You must accept the terms and conditions.");
+            setErrorMsg(t('acceptTermsErr'));
             return;
         }
 
@@ -140,10 +180,10 @@ export default function AuthScreen() {
                 age: isNaN(ageNumber) ? 0 : ageNumber,
                 userType: 3 // Default customer type
             });
-            Alert.alert("Success", "Account created successfully! You can now sign in.");
+            Alert.alert(t('success'), t('regSuccess'));
             switchMode(true);
         } catch (err: any) {
-            setErrorMsg(err.message || "Registration failed");
+            setErrorMsg(err.message || t('regFailed'));
         } finally {
             setIsLoading(false);
         }
@@ -219,15 +259,20 @@ export default function AuthScreen() {
 
                                 <View style={styles.inputGroup}>
                                     <Text style={[styles.label, isDarkMode && styles.labelDark]}>{t('passwordLabel')} <Text style={styles.asterisk}>*</Text></Text>
-                                    <TextInput
-                                        style={[styles.input, isDarkMode && styles.inputDark]}
-                                        placeholder={t('passDesc')}
-                                        placeholderTextColor={isDarkMode ? "#666" : "#B0A89C"}
-                                        secureTextEntry
-                                        value={password}
-                                        onChangeText={setPassword}
-                                        editable={!isLoading}
-                                    />
+                                    <View style={[styles.passwordContainer, isDarkMode && styles.passwordContainerDark]}>
+                                        <TextInput
+                                            style={[styles.inputInner, isDarkMode && styles.inputDark]}
+                                            placeholder={t('passDesc')}
+                                            placeholderTextColor={isDarkMode ? "#666" : "#B0A89C"}
+                                            secureTextEntry={!showPassword}
+                                            value={password}
+                                            onChangeText={setPassword}
+                                            editable={!isLoading}
+                                        />
+                                        <Pressable style={styles.eyeBtn} onPress={() => setShowPassword(v => !v)}>
+                                            <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={20} color={isDarkMode ? '#A0A0A0' : '#B35A12'} />
+                                        </Pressable>
+                                    </View>
                                 </View>
 
                                 <View style={styles.buttonContainer}>
@@ -289,11 +334,15 @@ export default function AuthScreen() {
                                     <Text style={[styles.label, isDarkMode && styles.labelDark]}>{t('phoneNum')}</Text>
                                     <TextInput
                                         style={[styles.input, isDarkMode && styles.inputDark]}
-                                        placeholder={t('phoneDesc')}
+                                        placeholder="(12) 345 67 89"
                                         placeholderTextColor={isDarkMode ? "#666" : "#B0A89C"}
                                         keyboardType="phone-pad"
-                                        value={phone}
-                                        onChangeText={setPhone}
+                                        value={formatPhone(phone)}
+                                        onChangeText={(text) => {
+                                            // Strip formatting to get raw digits only
+                                            const digitsOnly = text.replace(/\D/g, '').slice(0, 9);
+                                            setPhone(digitsOnly);
+                                        }}
                                         editable={!isLoading}
                                     />
                                 </View>
@@ -313,28 +362,38 @@ export default function AuthScreen() {
 
                                 <View style={styles.inputGroup}>
                                     <Text style={[styles.label, isDarkMode && styles.labelDark]}>{t('passwordLabel')} <Text style={styles.asterisk}>*</Text></Text>
-                                    <TextInput
-                                        style={[styles.input, isDarkMode && styles.inputDark]}
-                                        placeholder={t('passMinDesc')}
-                                        placeholderTextColor={isDarkMode ? "#666" : "#B0A89C"}
-                                        secureTextEntry
-                                        value={password}
-                                        onChangeText={setPassword}
-                                        editable={!isLoading}
-                                    />
+                                    <View style={[styles.passwordContainer, isDarkMode && styles.passwordContainerDark]}>
+                                        <TextInput
+                                            style={[styles.inputInner, isDarkMode && styles.inputDark]}
+                                            placeholder={t('passMinDesc')}
+                                            placeholderTextColor={isDarkMode ? "#666" : "#B0A89C"}
+                                            secureTextEntry={!showPassword}
+                                            value={password}
+                                            onChangeText={setPassword}
+                                            editable={!isLoading}
+                                        />
+                                        <Pressable style={styles.eyeBtn} onPress={() => setShowPassword(v => !v)}>
+                                            <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={20} color={isDarkMode ? '#A0A0A0' : '#B35A12'} />
+                                        </Pressable>
+                                    </View>
                                 </View>
 
                                 <View style={styles.inputGroup}>
                                     <Text style={[styles.label, isDarkMode && styles.labelDark]}>{t('confirmPassLabel')} <Text style={styles.asterisk}>*</Text></Text>
-                                    <TextInput
-                                        style={[styles.input, isDarkMode && styles.inputDark]}
-                                        placeholder={t('confirmDesc')}
-                                        placeholderTextColor={isDarkMode ? "#666" : "#B0A89C"}
-                                        secureTextEntry
-                                        value={confirmPassword}
-                                        onChangeText={setConfirmPassword}
-                                        editable={!isLoading}
-                                    />
+                                    <View style={[styles.passwordContainer, isDarkMode && styles.passwordContainerDark]}>
+                                        <TextInput
+                                            style={[styles.inputInner, isDarkMode && styles.inputDark]}
+                                            placeholder={t('confirmDesc')}
+                                            placeholderTextColor={isDarkMode ? "#666" : "#B0A89C"}
+                                            secureTextEntry={!showConfirmPassword}
+                                            value={confirmPassword}
+                                            onChangeText={setConfirmPassword}
+                                            editable={!isLoading}
+                                        />
+                                        <Pressable style={styles.eyeBtn} onPress={() => setShowConfirmPassword(v => !v)}>
+                                            <Ionicons name={showConfirmPassword ? 'eye-off' : 'eye'} size={20} color={isDarkMode ? '#A0A0A0' : '#B35A12'} />
+                                        </Pressable>
+                                    </View>
                                 </View>
 
                                 {/* Terms and conditions checkbox */}
@@ -485,6 +544,34 @@ const styles = StyleSheet.create({
         shadowRadius: 2,
         elevation: 1,
     },
+    // Password field with eye icon inside
+    passwordContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFFFFF',
+        borderWidth: 1,
+        borderColor: '#F2C27A',
+        borderRadius: 12,
+        height: 52,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.03,
+        shadowRadius: 2,
+        elevation: 1,
+    },
+    inputInner: {
+        flex: 1,
+        paddingHorizontal: 16,
+        fontSize: 15,
+        color: '#1A1A1A',
+        height: 52,
+    },
+    eyeBtn: {
+        paddingHorizontal: 14,
+        height: 52,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     termsRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -565,6 +652,10 @@ const styles = StyleSheet.create({
         backgroundColor: '#1A1A1A',
         borderColor: '#333',
         color: '#FFFFFF',
+    },
+    passwordContainerDark: {
+        backgroundColor: '#1A1A1A',
+        borderColor: '#333',
     },
     checkboxDark: {
         backgroundColor: '#1A1A1A',

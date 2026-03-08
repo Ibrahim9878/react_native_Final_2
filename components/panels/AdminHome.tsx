@@ -105,20 +105,20 @@ export default function AdminHome() {
                 <View style={styles.cardBody}>
                     <View style={styles.infoRow}>
                         <Ionicons name="person-circle-outline" size={16} color={isDarkMode ? "#A0A0A0" : "#6D4C41"} />
-                        <Text style={[styles.infoText, isDarkMode && styles.infoTextDark]}>Client: {item.customerEmail}</Text>
+                        <Text style={[styles.infoText, isDarkMode && styles.infoTextDark]}>{t('clientLabel')} {item.customerEmail}</Text>
                     </View>
                     <View style={styles.infoRow}>
                         <Ionicons name="cut-outline" size={16} color={isDarkMode ? "#A0A0A0" : "#6D4C41"} />
-                        <Text style={[styles.infoText, isDarkMode && styles.infoTextDark]}>Barber: {item.barberEmail}</Text>
+                        <Text style={[styles.infoText, isDarkMode && styles.infoTextDark]}>{t('barberLabel')} {item.barberEmail}</Text>
                     </View>
                     <View style={styles.infoRow}>
                         <Ionicons name="calendar-outline" size={16} color={isDarkMode ? "#A0A0A0" : "#6D4C41"} />
-                        <Text style={[styles.infoText, isDarkMode && styles.infoTextDark]}>{dateString} {timeString ? `at ${timeString}` : ''}</Text>
+                        <Text style={[styles.infoText, isDarkMode && styles.infoTextDark]}>{dateString} {timeString ? `${t('atSeparator')} ${timeString}` : ''}</Text>
                     </View>
 
                     {itemStatus === 'rejected' && item.rejectionReason && (
                         <View style={[styles.noteBox, isDarkMode && styles.noteBoxDark]}>
-                            <Text style={[styles.noteLabel, isDarkMode && styles.noteLabelDark, !isDarkMode && { color: '#CF000F' }]}>Rejected Reason:</Text>
+                            <Text style={[styles.noteLabel, isDarkMode && styles.noteLabelDark, !isDarkMode && { color: '#CF000F' }]}>{t('valReason')}</Text>
                             <Text style={[styles.noteText, isDarkMode && styles.noteTextDark, !isDarkMode && { color: '#CF000F' }]}>{item.rejectionReason}</Text>
                         </View>
                     )}

@@ -11,7 +11,7 @@ import {
     SafeAreaView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ServiceItem, BarberItem, SERVICES, BARBERS, generateAvailableSlots } from '../mock/servicesAndBarbers';
+import { ServiceItem, BarberItem, SERVICES, BARBERS, ALL_SLOTS } from '../mock/servicesAndBarbers';
 import { getAuthData } from '../storage/authStorage';
 import { useAppointments } from '../state/AppointmentsContext';
 import { useTheme } from '../state/ThemeContext';
@@ -25,7 +25,7 @@ type AppointmentWizardModalProps = {
 };
 
 export default function AppointmentWizardModal({ visible, onClose, initialBarber, onAppointmentAdded }: AppointmentWizardModalProps) {
-    const { addAppointment } = useAppointments();
+    const { addAppointment, appointments } = useAppointments();
     const { isDarkMode } = useTheme();
     const { t } = useLanguage();
     const [step, setStep] = useState(1);
@@ -86,22 +86,24 @@ export default function AppointmentWizardModal({ visible, onClose, initialBarber
                 return;
             }
 
+            const [year, month, day] = selectedDate.split('-').map(Number);
             const [timePart, modifier] = selectedTime.split(' ');
-            let [hours, minutes] = timePart.split(':');
-            let hoursInt = parseInt(hours, 10);
-            if (hoursInt === 12) {
-                hoursInt = modifier === 'PM' ? 12 : 0;
-            } else if (modifier === 'PM') {
-                hoursInt += 12;
-            }
-            const hh = hoursInt.toString().padStart(2, '0');
-            const mm = minutes.padStart(2, '0');
+            let [hours, minutes] = timePart.split(':').map(Number);
 
-            const appointmentDate = `${selectedDate}T${hh}:${mm}:00.000Z`; 
+            if (hours === 12) {
+                hours = modifier === 'PM' ? 12 : 0;
+            } else if (modifier === 'PM') {
+                hours += 12;
+            }
+
+            // Create a date object using local components
+            // Note: month is 0-indexed in JS Date (0-11)
+            const d = new Date(year, month - 1, day, hours, minutes);
+            const appointmentDate = d.toISOString();
 
             await addAppointment({
                 appointmentDateISO: appointmentDate,
-                barberEmail: "barber@gmail.com", 
+                barberEmail: selectedBarber.email,
                 customerEmail: session.email,
                 serviceName: selectedService.title,
                 note: note.trim()
@@ -192,10 +194,36 @@ export default function AppointmentWizardModal({ visible, onClose, initialBarber
         const dates = Array.from({ length: 14 }).map((_, i) => {
             const d = new Date();
             d.setDate(d.getDate() + i);
-            return d.toISOString().split('T')[0];
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
         });
 
-        const availableSlots = selectedDate && selectedBarber ? generateAvailableSlots(selectedDate, selectedBarber.id) : [];
+        // Get taken slots for this barber on this date (only accepted ones)
+        const takenSlots = selectedDate && selectedBarber ? appointments
+            .filter((a: any) => {
+                if (a.barberEmail !== selectedBarber.email || a.status !== 'accepted') return false;
+                // Parse and compare local date components to avoid timezone shifts
+                const d = new Date(a.appointmentDateISO);
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                const localDateStr = `${year}-${month}-${day}`;
+                return localDateStr === selectedDate;
+            })
+            .map((a: any) => {
+                const d = new Date(a.appointmentDateISO);
+                const hrs = d.getHours();
+                const mins = d.getMinutes();
+                const ampm = hrs >= 12 ? 'PM' : 'AM';
+                let h12 = hrs % 12;
+                if (h12 === 0) h12 = 12;
+                return `${String(h12).padStart(2, '0')}:${String(mins).padStart(2, '0')} ${ampm}`;
+            }) : [];
+
+        // Normalize available slots check as well
+        // const availableSlots = selectedDate && selectedBarber ? generateAvailableSlots(selectedDate, selectedBarber.id, takenSlots) : [];
 
         return (
             <View style={styles.stepContentFlex}>
@@ -227,21 +255,32 @@ export default function AppointmentWizardModal({ visible, onClose, initialBarber
                     <>
                         <Text style={[styles.label, { marginTop: 20 }, isDarkMode && styles.textDark]}>{t('selectTime')}</Text>
                         <ScrollView contentContainerStyle={styles.timeGrid}>
-                            {availableSlots.map(time => {
+                            {ALL_SLOTS.map(time => {
+                                const isTaken = takenSlots.includes(time);
                                 const isSelected = selectedTime === time;
                                 return (
                                     <Pressable
                                         key={time}
-                                        style={[styles.timeChip, isDarkMode && styles.cardDark, isSelected && styles.cardActive]}
-                                        onPress={() => setSelectedTime(time)}
+                                        style={[
+                                            styles.timeChip,
+                                            isDarkMode && styles.cardDark,
+                                            isTaken && (isDarkMode ? styles.timeChipTakenDark : styles.timeChipTaken),
+                                            isSelected && styles.cardActive
+                                        ]}
+                                        onPress={() => !isTaken && setSelectedTime(time)}
+                                        disabled={isTaken}
                                     >
-                                        <Text style={[styles.timeText, isDarkMode && styles.textDark, isSelected && styles.textActive]}>{time}</Text>
+                                        <Text style={[
+                                            styles.timeText,
+                                            isDarkMode && styles.textDark,
+                                            isTaken && (isDarkMode ? styles.timeTextTakenDark : styles.timeTextTaken),
+                                            isSelected && styles.textActive
+                                        ]}>
+                                            {time}
+                                        </Text>
                                     </Pressable>
                                 );
                             })}
-                            {availableSlots.length === 0 && (
-                                <Text style={[styles.emptyText, isDarkMode && styles.textMutatedDark]}>{t('noSlotsForDate')}</Text>
-                            )}
                         </ScrollView>
                     </>
                 )}
@@ -614,7 +653,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginBottom: 40,
     },
-    
+
     containerDark: { backgroundColor: '#121212' },
     headerDark: { backgroundColor: '#1A1A1A', borderBottomColor: '#2A2A2A' },
     contentDark: { backgroundColor: '#121212' },
@@ -628,4 +667,20 @@ const styles = StyleSheet.create({
     footerBtnOutlineTextDark: { color: '#A0A0A0' },
     footerBtnDark: { backgroundColor: '#B24700' },
     footerBtnTextDark: { color: '#FFFFFF' },
+    timeChipTaken: {
+        backgroundColor: '#E0E0E0',
+        borderColor: '#BDBDBD',
+        opacity: 0.6,
+    },
+    timeChipTakenDark: {
+        backgroundColor: '#2A2A2A',
+        borderColor: '#333333',
+        opacity: 0.4,
+    },
+    timeTextTaken: {
+        color: '#9E9E9E',
+    },
+    timeTextTakenDark: {
+        color: '#555555',
+    },
 });

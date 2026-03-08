@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { getAuthData, saveAuthData, clearAuthData, UserSession } from '../storage/authStorage';
+import { clearAuthData, getAuthData, saveAuthData, UserSession } from '../storage/authStorage';
 
 interface AuthContextType {
     session: UserSession | null;
     isLoading: boolean;
     login: (sessionData: UserSession) => Promise<void>;
     logout: () => Promise<void>;
+    updateSession: (updates: Partial<UserSession>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -44,8 +45,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSessionState(null);
     };
 
+    const updateSession = async (updates: Partial<UserSession>) => {
+        if (!session) return;
+        const updatedSession = { ...session, ...updates };
+        await saveAuthData(updatedSession);
+        setSessionState(updatedSession);
+    };
+
     return (
-        <AuthContext.Provider value={{ session, isLoading, login, logout }}>
+        <AuthContext.Provider value={{ session, isLoading, login, logout, updateSession }}>
             {children}
         </AuthContext.Provider>
     );

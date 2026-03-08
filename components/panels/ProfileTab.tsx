@@ -1,7 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Modal, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Modal, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
 import { LanguageCode, translations } from '../../src/i18n/translations';
 import { useAuth } from '../../src/state/AuthContext';
 import { useLanguage } from '../../src/state/LanguageContext';
@@ -9,12 +12,16 @@ import { useTheme } from '../../src/state/ThemeContext';
 
 export default function ProfileTab() {
     const { isDarkMode, toggleDarkMode } = useTheme();
-    const { session } = useAuth();
+    const { session, updateSession } = useAuth();
     const { language, setLanguage, t } = useLanguage();
     const router = useRouter();
 
     const [isLangModalVisible, setIsLangModalVisible] = useState(false);
     const [isInfoModalVisible, setIsInfoModalVisible] = useState(false);
+    const [isLocationModalVisible, setIsLocationModalVisible] = useState(false);
+    const [locationData, setLocationData] = useState<any>(null);
+    const [barberShops, setBarberShops] = useState<any[]>([]);
+    const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
     const blurActiveElement = () => {
         if (Platform.OS === 'web' && typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
@@ -30,6 +37,92 @@ export default function ProfileTab() {
     const openLangModal = () => {
         blurActiveElement();
         setIsLangModalVisible(true);
+    };
+
+    const generateRandomShops = (latitude: number, longitude: number) => {
+        const shops = [];
+        for (let i = 0; i < 5; i++) {
+            // Generate random offset between -0.01 and 0.01 degrees (roughly 1km radius limit)
+            const latOffset = (Math.random() - 0.5) * 0.02;
+            const lngOffset = (Math.random() - 0.5) * 0.02;
+            shops.push({
+                id: i.toString(),
+                latitude: latitude + latOffset,
+                longitude: longitude + lngOffset,
+                title: `Barber Shop ${i + 1}`,
+            });
+        }
+        setBarberShops(shops);
+    };
+
+    const openLocationModal = async () => {
+        setIsLocationModalVisible(true);
+        setIsLoadingLocation(true);
+        try {
+            let { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert("Permission to access location was denied");
+                setIsLoadingLocation(false);
+                return;
+            }
+
+            let location = await Location.getCurrentPositionAsync({});
+            const { latitude, longitude } = location.coords;
+            setLocationData({ latitude, longitude });
+            generateRandomShops(latitude, longitude);
+        } catch (error) {
+            Alert.alert("Could not fetch location");
+        }
+        setIsLoadingLocation(false);
+    };
+
+    const handleImagePick = async () => {
+        Alert.alert(
+            t('profileTitle'),
+            "Choose a photo source",
+            [
+                {
+                    text: "Camera",
+                    onPress: async () => {
+                        const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+                        if (permissionResult.granted === false) {
+                            Alert.alert("Permission needed", "You've refused to allow this app to access your camera!");
+                            return;
+                        }
+                        const result = await ImagePicker.launchCameraAsync({
+                            allowsEditing: true,
+                            aspect: [1, 1],
+                            quality: 0.5,
+                        });
+                        if (!result.canceled) {
+                            await updateSession({ profileImage: result.assets[0].uri });
+                        }
+                    }
+                },
+                {
+                    text: "Library",
+                    onPress: async () => {
+                        const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+                        if (permissionResult.granted === false) {
+                            Alert.alert("Permission needed", "You've refused to allow this app to access your photos!");
+                            return;
+                        }
+                        const result = await ImagePicker.launchImageLibraryAsync({
+                            allowsEditing: true,
+                            aspect: [1, 1],
+                            quality: 0.5,
+                        });
+                        if (!result.canceled) {
+                            await updateSession({ profileImage: result.assets[0].uri });
+                        }
+                    }
+                },
+                {
+                    text: "Cancel",
+                    style: "cancel"
+                }
+            ]
+        );
     };
 
     const userEmail = session?.email ?? '';
@@ -50,9 +143,13 @@ export default function ProfileTab() {
                 <View style={[styles.profileHeader, isDarkMode && styles.headerDark]}>
                     <View style={styles.profileImageContainer}>
                         <View style={styles.profileImagePlaceholder}>
-                            <Text style={styles.profileImageInitials}>{info.initials}</Text>
+                            {session?.profileImage ? (
+                                <Image source={{ uri: session.profileImage }} style={styles.profileImage} />
+                            ) : (
+                                <Text style={styles.profileImageInitials}>{info.initials}</Text>
+                            )}
                         </View>
-                        <Pressable style={styles.editImageBtn}>
+                        <Pressable style={styles.editImageBtn} onPress={handleImagePick}>
                             <Ionicons name="camera" size={18} color="#FFFFFF" />
                         </Pressable>
                     </View>
@@ -73,6 +170,14 @@ export default function ProfileTab() {
                             <Ionicons name="person-outline" size={20} color="#F2C27A" />
                         </View>
                         <Text style={[styles.menuText, isDarkMode && styles.menuTextDark]}>{t('personalInfo')}</Text>
+                        <Ionicons name="chevron-forward" size={20} color={isDarkMode ? "#A0A0A0" : "#4A3428"} />
+                    </Pressable>
+
+                    <Pressable style={styles.menuItem} onPress={openLocationModal}>
+                        <View style={styles.menuIconContainer}>
+                            <Ionicons name="location-outline" size={20} color="#F2C27A" />
+                        </View>
+                        <Text style={[styles.menuText, isDarkMode && styles.menuTextDark]}>Nearby Barber Shops</Text>
                         <Ionicons name="chevron-forward" size={20} color={isDarkMode ? "#A0A0A0" : "#4A3428"} />
                     </Pressable>
 
@@ -107,7 +212,7 @@ export default function ProfileTab() {
                     </Pressable>
 
 
-                    <Text style={[styles.menuTitle, { marginTop: 24 }]}>Hesab</Text>
+                    <Text style={[styles.menuTitle, { marginTop: 24 }]}>{t('account')}</Text>
 
                     <Pressable
                         style={[styles.menuItem, styles.logoutItem]}
@@ -116,7 +221,7 @@ export default function ProfileTab() {
                         <View style={[styles.menuIconContainer, styles.logoutIconContainer]}>
                             <Ionicons name="log-out-outline" size={20} color="#FF6B35" />
                         </View>
-                        <Text style={[styles.menuText, styles.logoutText]}>Çıxış et</Text>
+                        <Text style={[styles.menuText, styles.logoutText]}>{t('logout')}</Text>
                         <Ionicons name="chevron-forward" size={20} color="#FF6B35" />
                     </Pressable>
 
@@ -209,6 +314,58 @@ export default function ProfileTab() {
                     </ScrollView>
                 </SafeAreaView>
             </Modal>
+
+            {/* Location Modal */}
+            <Modal
+                visible={isLocationModalVisible}
+                animationType="slide"
+                presentationStyle="pageSheet"
+                onRequestClose={() => setIsLocationModalVisible(false)}
+            >
+                <SafeAreaView style={[styles.modalContainer, isDarkMode && styles.modalContainerDark]}>
+                    <View style={[styles.modalHeader, isDarkMode && styles.modalHeaderDark]}>
+                        <Pressable onPress={() => setIsLocationModalVisible(false)} style={styles.closeBtn}>
+                            <Ionicons name="close" size={24} color={isDarkMode ? "#FFFFFF" : "#2C1B10"} />
+                        </Pressable>
+                        <Text style={[styles.modalHeaderText, isDarkMode && styles.modalHeaderTextDark]}>Nearby Barber Shops</Text>
+                        <View style={{ width: 40 }} />
+                    </View>
+
+                    {isLoadingLocation ? (
+                        <View style={styles.loadingContainer}>
+                            <ActivityIndicator size="large" color="#F2C27A" />
+                            <Text style={[styles.loadingText, isDarkMode && styles.modalHeaderTextDark]}>Finding your location...</Text>
+                        </View>
+                    ) : locationData ? (
+                        <MapView
+                            style={styles.map}
+                            initialRegion={{
+                                latitude: locationData.latitude,
+                                longitude: locationData.longitude,
+                                latitudeDelta: 0.05,
+                                longitudeDelta: 0.05,
+                            }}
+                            showsUserLocation={true}
+                        >
+                            {barberShops.map((shop) => (
+                                <Marker
+                                    key={shop.id}
+                                    coordinate={{
+                                        latitude: shop.latitude,
+                                        longitude: shop.longitude,
+                                    }}
+                                    title={shop.title}
+                                    pinColor="blue"
+                                />
+                            ))}
+                        </MapView>
+                    ) : (
+                        <View style={styles.loadingContainer}>
+                            <Text style={[styles.loadingText, isDarkMode && styles.modalHeaderTextDark]}>Location not available</Text>
+                        </View>
+                    )}
+                </SafeAreaView>
+            </Modal>
         </View>
     );
 }
@@ -218,8 +375,9 @@ const styles = StyleSheet.create({
     profileContent: { paddingBottom: 100 },
     profileHeader: { alignItems: 'center', paddingVertical: 40, backgroundColor: '#F7F2EA' },
     profileImageContainer: { position: 'relative', marginBottom: 16 },
-    profileImagePlaceholder: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#2C1B10', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#F2C27A' },
+    profileImagePlaceholder: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#2C1B10', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#F2C27A', overflow: 'hidden' },
     profileImageInitials: { color: '#F2C27A', fontSize: 36, fontWeight: 'bold', fontFamily: 'serif' },
+    profileImage: { width: '100%', height: '100%', resizeMode: 'cover' },
     editImageBtn: { position: 'absolute', bottom: 0, right: 0, backgroundColor: '#B24700', width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#F7F2EA' },
     profileName: { fontSize: 24, fontWeight: 'bold', color: '#2C1B10', fontFamily: 'serif' },
     profileEmail: { fontSize: 14, color: '#6D4C41', marginTop: 4 },
@@ -272,4 +430,7 @@ const styles = StyleSheet.create({
     infoLabel: { fontSize: 14, color: '#F2C27A', fontWeight: 'bold' },
     infoValue: { fontSize: 16, color: '#2C1B10', fontWeight: '500' },
     infoValueDark: { color: '#FFFFFF' },
+    map: { flex: 1, width: '100%', height: '100%' },
+    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    loadingText: { marginTop: 12, fontSize: 16, color: '#2C1B10', fontWeight: '500' },
 });

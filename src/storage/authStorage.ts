@@ -11,6 +11,7 @@ export interface UserSession {
     lastName?: string;
     phoneNumber?: string;
     age?: number;
+    profileImage?: string;
 }
 
 /**

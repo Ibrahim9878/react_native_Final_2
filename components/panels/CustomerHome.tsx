@@ -157,10 +157,10 @@ export default function CustomerHome() {
                                         <Text style={[styles.appointmentBarber, isDarkMode && styles.appointmentBarberDark]}>{t('with')} {barberName}</Text>
                                         <View style={[styles.appointmentTimeRow, isDarkMode && styles.appointmentTimeRowDark]}>
                                             <Ionicons name="calendar-outline" size={14} color={isDarkMode ? "#A0A0A0" : "#6D4C41"} />
-                                            <Text style={[styles.appointmentTime, isDarkMode && styles.appointmentTimeDark]}>{dateString} at {timeString}</Text>
+                                            <Text style={[styles.appointmentTime, isDarkMode && styles.appointmentTimeDark]}>{dateString} {t('atSeparator')} {timeString}</Text>
                                         </View>
                                         {item.status === 'rejected' && item.rejectionReason && (
-                                            <Text style={{ color: '#FF5252', fontSize: 12, marginTop: 8 }}>Reason: {item.rejectionReason}</Text>
+                                            <Text style={{ color: '#FF5252', fontSize: 12, marginTop: 8 }}>{t('valReason')} {item.rejectionReason}</Text>
                                         )}
                                     </View>
                                 );

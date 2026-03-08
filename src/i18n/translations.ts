@@ -1,6 +1,6 @@
 export const translations = {
     en: {
-        
+
         profileTitle: "Account Settings",
         personalInfo: "Personal Information",
         userManagement: "User Management",
@@ -9,6 +9,7 @@ export const translations = {
         lightMode: "Light Mode",
         language: "Language",
         logout: "Logout",
+        account: "Account",
         globalAdministrator: "Global Administrator",
         systemController: "System Controller",
         masterBarber: "Master Barber",
@@ -17,7 +18,7 @@ export const translations = {
         goldMember: "Gold Member",
         languageNames: { en: "English", az: "Azərbaycan", tr: "Türkçe" },
 
-        
+
         signInTitle: "Welcome back",
         signInSubtitle: "Sign in to your account",
         signUpTitle: "Join us today",
@@ -52,12 +53,12 @@ export const translations = {
         passMinDesc: "Enter password (min. 6 characters)",
         confirmDesc: "Confirm your password",
 
-        
+
         tabHome: "Home",
         tabAppointments: "Appointments",
         tabProfile: "Profile",
 
-        
+
         shopName: "TrioCut Barber Shop",
         shopLocation: "Baku",
         shopHours: "9:00 AM - 7:00 PM",
@@ -74,7 +75,7 @@ export const translations = {
         with: "with",
         reviews: "reviews",
 
-        
+
         barberPanel: "Barber Panel",
         todaysEarnings: "Today's Earnings",
         totalAppointments: "Total Appointments",
@@ -89,7 +90,7 @@ export const translations = {
         rejectReasonPlaceholder: "State your rejection reason here...",
         cancel: "Cancel",
 
-        
+
         adminDashboard: "Admin Dashboard",
         overview: "Overview",
         totalUsers: "Total Users",
@@ -109,7 +110,7 @@ export const translations = {
         noMatchAppts: "No matching appointments found",
         totalAppts: "TOTAL",
 
-        
+
         stepService: "1/5 Service",
         stepBarberPreset: "Barber Preselected",
         stepBarber: "2/5 Barber",
@@ -137,7 +138,26 @@ export const translations = {
         backToPanel: "Back to Custom Panel",
         back: "Back",
         next: "Next",
-        valReason: "Reason:"
+        valReason: "Reason:",
+        clientLabel: "Client:",
+        atSeparator: "at",
+        rejectedByBarber: "Rejected by Barber",
+        logoutConfirmTitle: "Log out",
+        logoutConfirmSubtitle: "Are you sure you want to log out of your account?",
+        logoutYes: "Yes, Log out",
+        logoutNo: "Go Back",
+        fillFields: "Please fill in all required fields (*).",
+        passMismatch: "Passwords do not match.",
+        acceptTermsErr: "You must accept the terms and conditions.",
+        regSuccess: "Account created successfully! You can now sign in.",
+        loginFailed: "Login failed",
+        regFailed: "Registration failed",
+        success: "Success",
+        invalidEmail: "Please enter a valid email address (must contain @).",
+        passMinLengthErr: "Password must be at least 6 characters long.",
+        firstNameMinErr: "First name must be at least 3 characters.",
+        lastNameMinErr: "Last name must be at least 3 characters.",
+        phoneErr: "Phone number must contain only digits and be max 9 digits."
     },
     az: {
         profileTitle: "Hesab Tənzimləmələri",
@@ -147,7 +167,8 @@ export const translations = {
         darkMode: "Qaranlıq Rejim",
         lightMode: "İşıqlı Rejim",
         language: "Dil",
-        logout: "Çıxış",
+        logout: "Çıxış et",
+        account: "Hesab",
         globalAdministrator: "Qlobal Administrator",
         systemController: "Sistem Nəzarətçisi",
         masterBarber: "Usta Bərbər",
@@ -270,7 +291,26 @@ export const translations = {
         backToPanel: "Panelə Qayıt",
         back: "Geri",
         next: "İrəli",
-        valReason: "Səbəb:"
+        valReason: "Səbəb:",
+        clientLabel: "Müştəri:",
+        atSeparator: "saat",
+        rejectedByBarber: "Bərbər tərəfindən rədd edildi",
+        logoutConfirmTitle: "Çıxış et",
+        logoutConfirmSubtitle: "Hesabınızdan çıxmaq istədiyinizə əminsinizmi?",
+        logoutYes: "Bəli, Çıxış et",
+        logoutNo: "Geri Qayıt",
+        fillFields: "Zəhmət olmasa bütün vacib xanaları doldurun (*).",
+        passMismatch: "Şifrələr uyğun gəlmir.",
+        acceptTermsErr: "Şərtlər və qaydalarla razılaşmalısınız.",
+        regSuccess: "Hesab uğurla yaradıldı! İndi daxil ola bilərsiniz.",
+        loginFailed: "Giriş uğursuz oldu",
+        regFailed: "Qeydiyyat uğursuz oldu",
+        success: "Uğurlu",
+        invalidEmail: "Zəhmət olmasa düzgün email daxil edin (@ işarəsi olmalıdır).",
+        passMinLengthErr: "Şifrə ən azı 6 simvoldan ibarət olmalıdır.",
+        firstNameMinErr: "Ad ən azı 3 simvoldan ibarət olmalıdır.",
+        lastNameMinErr: "Soyad ən azı 3 simvoldan ibarət olmalıdır.",
+        phoneErr: "Telefon nömrəsi yalnız rəqəmlərdən ibarət olmalı və maksimum 9 rəqəm olmalıdır."
     },
     tr: {
         profileTitle: "Hesap Ayarları",
@@ -281,6 +321,7 @@ export const translations = {
         lightMode: "Aydınlık Mod",
         language: "Dil",
         logout: "Çıkış Yap",
+        account: "Hesap",
         globalAdministrator: "Global Yönetici",
         systemController: "Sistem Kontrolcüsü",
         masterBarber: "Usta Berber",
@@ -403,7 +444,26 @@ export const translations = {
         backToPanel: "Panele Dön",
         back: "Geri",
         next: "İleri",
-        valReason: "Neden:"
+        valReason: "Neden:",
+        clientLabel: "Müşteri:",
+        atSeparator: "saat",
+        rejectedByBarber: "Berber tarafından reddedildi",
+        logoutConfirmTitle: "Çıkış yap",
+        logoutConfirmSubtitle: "Hesabınızdan çıkmak istediğinize emin misiniz?",
+        logoutYes: "Evet, Çıkış Yap",
+        logoutNo: "Geri Dön",
+        fillFields: "Lütfen tüm gerekli alanları doldurun (*).",
+        passMismatch: "Şifreler eşleşmiyor.",
+        acceptTermsErr: "Şartlar ve koşulları kabul etmelisiniz.",
+        regSuccess: "Hesap başarıyla oluşturuldu! Şimdi giriş yapabilirsiniz.",
+        loginFailed: "Giriş başarısız oldu",
+        regFailed: "Kayıt başarısız oldu",
+        success: "Başarılı",
+        invalidEmail: "Lütfen geçerli bir e-posta adresi girin (@ işareti içermelidir).",
+        passMinLengthErr: "Şifre en az 6 karakter uzunluğunda olmalıdır.",
+        firstNameMinErr: "Ad en az 3 karakter olmalıdır.",
+        lastNameMinErr: "Soyad en az 3 karakter olmalıdır.",
+        phoneErr: "Telefon numarası yalnızca rakamlardan oluşmalı ve maksimum 9 rakam olmalıdır."
     }
 };
 

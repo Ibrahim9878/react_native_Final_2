@@ -10,15 +10,17 @@ import {
     View,
 } from 'react-native';
 import { useAuth } from '../src/state/AuthContext';
+import { useLanguage } from '../src/state/LanguageContext';
 
 export default function LogoutScreen() {
     const router = useRouter();
     const { logout } = useAuth();
+    const { t, language } = useLanguage();
 
     // Animations
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const scaleAnim = useRef(new Animated.Value(0.8)).current;
-    const iconRotate = useRef(new Animated.Value(0)).current;
+    const universalAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
         Animated.parallel([
@@ -35,25 +37,46 @@ export default function LogoutScreen() {
             }),
         ]).start();
 
-        // Loop icon rotation
+        // Loop dynamic animation
         Animated.loop(
-            Animated.timing(iconRotate, {
+            Animated.timing(universalAnim, {
                 toValue: 1,
-                duration: 3000,
+                duration: language === 'en' ? 1500 : 3000,
                 easing: Easing.linear,
                 useNativeDriver: true,
             })
         ).start();
-    }, []);
+    }, [language]);
 
-    const iconSpin = iconRotate.interpolate({
-        inputRange: [0, 1],
-        outputRange: ['0deg', '360deg'],
-    });
+    // Language specific animation transforms
+    const getAnimationTransform = () => {
+        if (language === 'az') {
+            // Spin
+            const spin = universalAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: ['0deg', '360deg'],
+            });
+            return { rotate: spin };
+        } else if (language === 'en') {
+            // Pulse
+            const pulse = universalAnim.interpolate({
+                inputRange: [0, 0.5, 1],
+                outputRange: [1, 1.2, 1],
+            });
+            return { scale: pulse };
+        } else {
+            // Float (TR)
+            const float = universalAnim.interpolate({
+                inputRange: [0, 0.5, 1],
+                outputRange: [0, -10, 0],
+            });
+            return { translateY: float };
+        }
+    };
 
     const handleConfirmLogout = async () => {
-        await logout();          // AsyncStorage + React session state ikisi də sıfırlanır
-        router.replace('/login'); // Login/Register ekranına apar
+        await logout();
+        router.replace('/login');
     };
 
     const handleCancel = () => {
@@ -62,7 +85,6 @@ export default function LogoutScreen() {
 
     return (
         <View style={styles.container}>
-            {/* Background gradient overlay */}
             <View style={styles.bgOverlay} />
 
             <Animated.View
@@ -71,30 +93,26 @@ export default function LogoutScreen() {
                     { opacity: fadeAnim, transform: [{ scale: scaleAnim }] },
                 ]}
             >
-                {/* Icon */}
                 <View style={styles.iconWrapper}>
-                    <Animated.View style={{ transform: [{ rotate: iconSpin }] }}>
+                    <Animated.View style={{ transform: [getAnimationTransform()] }}>
                         <Ionicons name="log-out-outline" size={48} color="#F2C27A" />
                     </Animated.View>
                 </View>
 
-                {/* Title */}
-                <Text style={styles.title}>Çıxış et</Text>
+                <Text style={styles.title}>{t('logoutConfirmTitle')}</Text>
                 <Text style={styles.subtitle}>
-                    Hesabınızdan çıxmaq istədiyinizə əminsinizmi?
+                    {t('logoutConfirmSubtitle')}
                 </Text>
 
-                {/* Divider */}
                 <View style={styles.divider} />
 
-                {/* Buttons */}
                 <TouchableOpacity
                     style={styles.btnConfirm}
                     onPress={handleConfirmLogout}
                     activeOpacity={0.85}
                 >
                     <Ionicons name="checkmark-circle-outline" size={20} color="#FFFFFF" />
-                    <Text style={styles.btnConfirmText}>Bəli, Çıxış et</Text>
+                    <Text style={styles.btnConfirmText}>{t('logoutYes')}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -103,7 +121,7 @@ export default function LogoutScreen() {
                     activeOpacity={0.75}
                 >
                     <Ionicons name="arrow-back-outline" size={20} color="#F2C27A" />
-                    <Text style={styles.btnCancelText}>Geri Qayıt</Text>
+                    <Text style={styles.btnCancelText}>{t('logoutNo')}</Text>
                 </TouchableOpacity>
             </Animated.View>
         </View>

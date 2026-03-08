@@ -13,7 +13,7 @@ export interface ServiceItem {
 export interface BarberItem {
     id: string;
     name: string;
-    email: string; 
+    email: string;
     role: string;
     rating: number;
     reviews: number;
@@ -56,6 +56,18 @@ export const SERVICES: ServiceItem[] = [
 
 export const BARBERS: BarberItem[] = [
     {
+        id: 'b3',
+        name: 'Test Barber (Barber Panel)',
+        email: 'barber@gmail.com',
+        role: 'Master Barber',
+        rating: 4.9,
+        reviews: 45,
+        experience: '5 years experience',
+        imageUrl: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=200&h=200',
+        isAvailable: true,
+        specialties: ['s1', 's2', 's3']
+    },
+    {
         id: 'b1',
         name: 'Mike Johnson',
         email: 'mike@triocut.com',
@@ -63,7 +75,7 @@ export const BARBERS: BarberItem[] = [
         rating: 5.0,
         reviews: 124,
         experience: '12 years experience',
-        imageUrl: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=200&h=200',
+        imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200&h=200',
         isAvailable: true,
         specialties: ['s1', 's2', 's3']
     },
@@ -82,14 +94,15 @@ export const BARBERS: BarberItem[] = [
 ];
 
 
-export function generateAvailableSlots(dateString: string, barberId: string): string[] {
-    const slots = [
-        '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM',
-        '11:00 AM', '11:30 AM', '12:00 PM', '12:30 PM',
-        '01:00 PM', '01:30 PM', '02:00 PM', '02:30 PM',
-        '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM',
-        '05:00 PM', '05:30 PM', '06:00 PM', '06:30 PM'
-    ];
-    const seed = dateString.charCodeAt(dateString.length - 1) + barberId.charCodeAt(barberId.length - 1);
-    return slots.filter((_, index) => (seed + index) % 3 !== 0);
+export const ALL_SLOTS = [
+    '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM',
+    '11:00 AM', '11:30 AM', '12:00 PM', '12:30 PM',
+    '01:00 PM', '01:30 PM', '02:00 PM', '02:30 PM',
+    '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM',
+    '05:00 PM', '05:30 PM', '06:00 PM', '06:30 PM'
+];
+
+export function generateAvailableSlots(dateString: string, barberId: string, takenSlots: string[] = []): string[] {
+    // Return all slots, filtering will be handled by UI (graying out)
+    return ALL_SLOTS;
 }
